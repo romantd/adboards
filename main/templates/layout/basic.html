@@ -8,6 +8,7 @@
         <title>{% block title %}Main{% endblock title %} - Adboards</title>
         {% bootstrap_css %}
         <link rel="stylesheet" type="text/css" href="{% static 'main/style.css' %}">
+        <script src="{% static 'main/script.js' %}"></script>
         {% bootstrap_javascript jquery='slim' %}
     </head>
     <body class="container-fluid">
@@ -48,7 +49,11 @@
                 <a class="nav-link root text-dark" href="{% url 'main:index' %}">Main</a>
                 {% for category in categories %}
                 {% ifchanged category.parent.pk %}
-                <span class="nav-link root font-weight-bold">{{ category.parent.name }}</span>
+                <span class="nav-link root font-weight-bold">
+                    <a class="nav-link  text-dark" href="{% url 'main:by_category' pk=category.parent.pk %}">
+                        {{ category.parent.name }}
+                    </a>
+                </span>
                 {% endifchanged %}
                 <a class="nav-link  text-dark" href="{% url 'main:by_category' pk=category.pk %}">{{ category.name }}</a>
                 {% endfor %}

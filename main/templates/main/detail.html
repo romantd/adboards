@@ -17,14 +17,31 @@
         </div>
     </div>
 </div>
+
 {% if ais %}
-<div class="d-flex justify-content-between flex-wrap mt-5">
+<div class="d-flex flex-wrap mt-5">
     {% for ai in ais %}
-    <div>
-        <img class="additional-image" src="{{ ai.image.url }}">
+    <div class="px-3 mt-3">
+        <img class="additional-image" src="{{ ai.image.url }}" data-toggle="modal" data-target="#imageModal" onclick="showImageModal('{{ ai.image.url }}')">
     </div>
     {% endfor%}
 </div>
 {% endif %}
 <p><a href="{% url 'main:by_category' pk=ad.category.pk %}{{ all }}">Back</a></p>
+<!-- Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="imageModalLabel">Image Preview</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <img id="modalImage" src="" class="img-fluid" alt="Preview">
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}

@@ -120,26 +120,48 @@ class DeleteUserView(LoginRequiredMixin, DeleteView):
 #Ads
 from django.core.paginator import Paginator
 from django.db.models import Q
-from .models import SubCategory, Ad
+from .models import SubCategory, Ad, SuperCategory
 from .forms import SearchForm
 def by_category(request, pk):
-    category = get_object_or_404(SubCategory, pk=pk)
-    ads = Ad.objects.filter(is_active=True, category=pk)
-    if 'keyword' in request.GET:
-        keyword = request.GET['keyword']
-        q = Q(title__icontains=keyword) | Q(content__icontains=keyword)
-        ads = ads.filter(q)
-    else:
-        keyword = ''
-    form = SearchForm(initial={'keyword': keyword})
-    paginator = Paginator(ads, 2)
-    if 'page' in request.GET:
-        page_num = request.GET['page']
-    else:
-        page_num = 1
-    page = paginator.get_page(page_num)
-    context = {'category':category, 'page':page, 'ads':page.object_list, 'form':form}
-    return render(request, 'main/by_category.html', context)        
+    try:
+        category = get_object_or_404(SubCategory, pk=pk)
+        ads = Ad.objects.filter(is_active=True, category=pk)
+        if 'keyword' in request.GET:
+            keyword = request.GET['keyword']
+            q = Q(title__icontains=keyword) | Q(content__icontains=keyword)
+            ads = ads.filter(q)
+        else:
+            keyword = ''
+        form = SearchForm(initial={'keyword': keyword})
+        paginator = Paginator(ads, 10)
+        if 'page' in request.GET:
+            page_num = request.GET['page']
+        else:
+            page_num = 1
+        page = paginator.get_page(page_num)
+        context = {'category':category, 'page':page, 'ads':page.object_list, 'form':form}
+        return render(request, 'main/by_category.html', context)        
+    except:
+        pass
+        category = get_object_or_404(SuperCategory, pk=pk)
+        ads = Ad.objects.filter(is_active=True, category__parent=pk)
+        if 'keyword' in request.GET:
+            keyword = request.GET['keyword']
+            q = Q(title__icontains=keyword) | Q(content__icontains=keyword)
+            ads = ads.filter(q)
+        else:
+            keyword = ''
+        form = SearchForm(initial={'keyword': keyword})
+        paginator = Paginator(ads, 6)
+        if 'page' in request.GET:
+            page_num = request.GET['page']
+        else:
+            page_num = 1
+        page = paginator.get_page(page_num)
+        context = {'category':category, 'page':page, 'ads':page.object_list, 'form':form}
+        return render(request, 'main/by_category.html', context)    
+    
+    
 
 #Details
 def detail(request, category_pk, pk):
