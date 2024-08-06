@@ -1,0 +1,5 @@
+Dear user {{ user.username }},
+Your account has been created. To activate your account, please click the following link:
+{{ host }}{% url 'main:register_activate' sign=sign %}
+If you did not request this, please ignore this email.
+Thank you for registering.

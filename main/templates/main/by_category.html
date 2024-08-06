@@ -1,0 +1,45 @@
+{% extends 'layout/basic.html' %}
+{% load thumbnail %}
+{% load static %}
+{% load bootstrap4 %}
+{% block title %}{{ category }}{% endblock %}   
+{% block content %}
+<h2 class="mb-2">{{ category}}</h2>
+<div class="conteiner-fluid mb-2">
+    <div class="row">
+        <div class="col">&nbsp;</div>
+            <form class="col-md-auto form-inline">
+                {% bootstrap_form form show_label=False %}
+                {% bootstrap_button content='Search' button_type='submit' %}
+            </form>
+        </div>  
+    </div>
+    {% if ads %}
+    <ul class="list-unstyled">
+        {% for ad in ads %}
+        <li class="media my-5 p-3 border">
+            {% url 'main:detail' category_pk=category.pk pk=ad.pk as url %}
+            <a class="text-dark" href="{{ url }}{{ all }}">
+            {% if ad.image %}
+            <img class="mr-3" src="{{ad.image|thumbnail_url:'default'}}">
+            {% else %}
+            <img class="mr-3" src="{% static 'main/no_image.jpg' %}">
+            {% endif %}
+            </a>
+            <div class="media-body">
+                <h3>
+                    <a class="text-dark" href="{{ url }}{{ all }}">
+                        {{ ad.title }}
+                    </a>
+                </h3>
+                <div>{{ ad.content }}</div>
+                    <p class="text-right font-weight-bold">{{ ad.price }}$</p>
+                    <p class="text-right font-italic">{{ ad.created_at }}</p>
+                </div>
+            </div>
+        </li>
+    {% endfor %}
+</ul>
+{% bootstrap_pagination page url=keyword %}
+{% endif %}
+{% endblock%}
