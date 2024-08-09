@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>{{ ad.title }}</h2>
+<p>{{ ad.description }}</p>
+
+{% if is_seller %}
+    <h3>Conversations with Buyers</h3>
+    <ul>
+        {% for conversation in conversations %}
+            <li>
+                <a href="{% url 'conversation_detail' conversation.id %}">
+                    Conversation with {{ conversation.buyer.username }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <h3>Your Conversation</h3>
+    {% if conversations %}
+        {% for conversation in conversations %}
+            <div>
+                {% for message in conversation.messages.all %}
+                    <div>
+                        <strong>{{ message.sender.username }}:</strong> {{ message.text }} <em>{{ message.created_at }}</em>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No conversation yet. Start one below:</p>
+    {% endif %}
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Send</button>
+    </form>
+{% endif %}
+{% endblock %}

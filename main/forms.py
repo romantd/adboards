@@ -64,3 +64,19 @@ class AdForm(forms.ModelForm):
         fields = '__all__'
         widgets = {'author': forms.HiddenInput}
 AIFormSet = inlineformset_factory(Ad, AdditionalImage, fields='__all__', extra=3)
+
+#Conversion
+from django import forms
+from .models import Message
+
+class MessageForm(forms.ModelForm):
+    class Meta:
+        model = Message
+        fields = ['text']
+        widgets = {
+            'text': forms.Textarea(attrs={
+                'rows': 3,
+                'class': 'form-control',
+                'placeholder': 'Enter your message here...'
+            }),
+        }

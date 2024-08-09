@@ -1,0 +1,14 @@
+{% extends "layout/basic.html" %}
+{% load bootstrap4 %}
+{% block content %}
+  <h1>Your Conversations</h1>
+  <ul>
+    {% for conversation in object_list %}
+      <li>
+        <a href="{% url 'conversation_detail' conversation.pk %}">
+          Conversation about {{ conversation.ad.title }} with {{ conversation.buyer.username if conversation.seller == request.user else conversation.seller.username }}
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+{% endblock %}

@@ -14,29 +14,33 @@
 <h3>Your ads</h3>
 <div class="conteiner-fluid mb-2">
     {% if ads %}
-    <ul class="list-unstyled">
-        {% for ad in ads %}
-        <li class="media my-5 p-3 border">
-            {% url 'main:detail' category_pk=category.pk pk=ad.pk as url %}
-            <a href="{{ url }}{{ all }}">
-            {% if ad.image %}
-            <img class="mr-3" src="{{ad.image|thumbnail_url:'default'}}">
-            {% else %}
-            <img class="mr-3" src="{% static 'main/no_image.jpg' %}">
-            {% endif %}
-            </a>
-            <div class="media-body">
-                <h3>
-                    <a href="{{ url }}{{ all }}">
-                        {{ ad.title }}
-                    </a>
-                </h3>
-                <div>{{ ad.content }}</div>
+    <div class="container-fluid">
+        <div class="row">
+            {% for ad in ads %}
+            <div class="col-xxl-2 col-xl-3 col-lg-4 col-md-6 col-sm-12 mb-4">
+                <div class="card h-100">
+                    {% url 'main:profile_ad_change' pk=ad.pk as url %}
+                    <a class="text-dark" href="{{ url }}{{ pk }}">
+                    {% if ad.image %}
+                    <img class="card-img-top" src="{{ad.image.url}}">
+                    {% else %}
+                    <img class="mr-3" src="{% static 'main/no_image.jpg' %}">
+                    {% endif %}
+                </a>
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <a class="text-dark" href="{{ url }}{{ all }}">
+                            {{ ad.title }}
+                        </a>
+                    </h5>
+                    <p class="card-text">{{ ad.content }}</p>
+                </div>
+                <div class="card-footer">
                     <p class="text-right font-weight-bold">{{ ad.price }}$</p>
                     <p class="text-right font-italic">{{ ad.created_at }}</p>
                 </div>
             </div>
-        </li>
+        </div>  
     {% endfor %}
 </ul>
 

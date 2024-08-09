@@ -1,0 +1,31 @@
+{% extends "layout/basic.html" %}
+{% load bootstrap4 %}
+{% block title %}Conversation Detail{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Conversation Detail</h1>
+    <div class="mb-3">
+        <p><strong>Conversation ID:</strong> {{ conversation.id }}</p>
+        <p><strong>Buyer:</strong> {{ conversation.buyer.username }}</p>
+        <p><strong>Seller:</strong> {{ conversation.seller.username }}</p>
+    </div>
+    
+    <h2 class="mb-3">Messages:</h2>
+    <ul class="list-group mb-4">
+        {% for message in umessages %}
+            <li class="list-group-item">
+                <strong>{{ message.sender.username }}:</strong> {{ message.text }} 
+                <span class="text-muted">({{ message.timestamp }})</span>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <h2 class="mb-3">Send a Message</h2>
+    <form method="post" class="mb-4">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Send</button>
+    </form>
+</div>
+{% endblock %}

@@ -84,3 +84,16 @@ img.main-image {
 img.additional-image {
     width:198px
 }
+.nav-link {
+    transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 5px;
+}
+
+.nav-link:hover {
+    background-color: #e9ecef;
+    color: #0056b3;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+}

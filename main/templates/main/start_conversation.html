@@ -1,0 +1,10 @@
+{% extends "layout/basic.html" %}
+{% load bootstrap4 %}
+{% block content %}
+  <h1>Start Conversation about {{ ad.title }}</h1>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Send</button>
+  </form>
+{% endblock %}

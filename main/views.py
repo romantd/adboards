@@ -15,11 +15,6 @@ def other_page(request, page):
         raise Http404
     return HttpResponse(template.render(request=request))
 
-def index(request):
-    ads = Ad.objects.filter(is_active=True)[:10]
-    context = {'ads':ads}
-    return render(request, 'main/index.html', context)
-
 class BBLoginView(LoginView):
     template_name = 'main/login.html'
 
@@ -122,6 +117,10 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from .models import SubCategory, Ad, SuperCategory
 from .forms import SearchForm
+def index(request):
+    ads = Ad.objects.filter(is_active=True)[:10]
+    context = {'ads':ads}
+    return render(request, 'main/index.html', context)
 def by_category(request, pk):
     try:
         category = get_object_or_404(SubCategory, pk=pk)
@@ -164,11 +163,80 @@ def by_category(request, pk):
     
 
 #Details
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.views.generic.detail import DetailView
+from .models import Ad, Conversation
+from .forms import MessageForm
+import logging
+
+logger = logging.getLogger(__name__)
+
 def detail(request, category_pk, pk):
-    ad = get_object_or_404(Ad, pk=pk)
-    ais = ad.additionalimage_set.all()
-    context = {'ad':ad, 'ais':ais}
+    try:
+        ad = get_object_or_404(Ad, pk=pk)
+        ais = ad.additionalimage_set.all()
+    except Exception as e:
+        logger.error(f"Ad not found: category_pk={category_pk}, pk={pk}, error={e}")
+        return render(request, '404.html', status=404)
+    
+    form = None
+    context = {
+        'ad': ad,
+        'ais': ais,
+        'form': form,
+        'is_author': False,
+        'conversations': [],
+        'messages': [],
+        'user': request.user,
+    }
+
+    if request.user.is_authenticated:
+        form = MessageForm(request.POST or None)
+        
+        if request.method == 'POST' and form.is_valid():
+            message = form.save(commit=False)
+            # Перевірка існування розмови
+            conversation = Conversation.objects.filter(ad=ad, buyer=request.user).first()
+            if not conversation:
+                # Створення нової розмови
+                conversation = Conversation.objects.create(ad=ad, buyer=request.user, seller=ad.author)
+            
+            message.conversation = conversation
+            message.sender = request.user
+            message.save()
+            return redirect('main:detail', category_pk=category_pk, pk=pk)
+    
+        if request.user == ad.author:
+            # User is an author
+            conversations = Conversation.objects.filter(ad=ad, seller=request.user)
+            buyers = []
+            for conversation in conversations:
+                if conversation.buyer != request.user:
+                    buyers.append({'buyer': conversation.buyer, 'conversation': conversation})
+            context.update({
+                'conversations': conversations,
+                'form': form,
+                'is_author': True,
+                'buyers': buyers,
+            })
+        else:
+            # User is a buyer
+            conversation = Conversation.objects.filter(ad=ad, buyer=request.user).first()
+            umessages = conversation.messages.all() if conversation else []
+            context.update({
+                'conversations': [conversation] if conversation else [],
+                'form': form,
+                'umessages': messages,
+            })
+
     return render(request, 'main/detail.html', context)
+# Profile
+@login_required
+def profile(request):
+    ads = Ad.objects.filter(author=request.user.pk)
+    context = {'ads': ads}
+    return render(request, 'main/profile.html', context)
 
 #Profile
 @login_required
@@ -202,6 +270,7 @@ def profile_ad_add(request):
 @login_required
 def profile_ad_change(request, pk):
     ad = get_object_or_404(Ad, pk=pk)
+    form = None
     if request.method == 'POST':
         form = AdForm(request.POST, request.FILES, instance=ad)
         if form.is_valid():
@@ -215,7 +284,7 @@ def profile_ad_change(request, pk):
         form = AdForm(instance=ad)
         formset = AIFormSet(instance=ad)
     context = {'form': form, 'formset': formset}
-    return render(request, 'main/profile_ad_change.html')
+    return render(request, 'main/profile_ad_change.html', context)
 
 @login_required
 def profile_ad_delete(request, pk):
@@ -237,3 +306,95 @@ def profile_ad_detail(request, category_pk, pk):
     return render(request, 'main/profile_ad_detail.html', context)
 
 
+#Conversation
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.views.generic import ListView, DetailView, CreateView
+from .models import Conversation, Message, Ad
+from .forms import MessageForm
+
+@login_required
+def start_conversation(request, ad_id):
+    ad = get_object_or_404(Ad, id=ad_id)
+    if request.method == 'POST':
+        form = MessageForm(request.POST)
+        if form.is_valid():
+            conversation = Conversation.objects.create(ad=ad, seller=ad.author, buyer=request.user)
+            Message.objects.create(conversation=conversation, sender=request.user, text=form.cleaned_data['text'])
+            return redirect('conversation_detail', pk=conversation.pk)
+    else:
+        form = MessageForm()
+    return render(request, 'main/start_conversation.html', {'form': form, 'ad': ad})
+
+class ConversationListView(LoginRequiredMixin, ListView):
+    model = Conversation
+    template_name = 'main/conversation_list.html'
+
+    def get_queryset(self):
+        return Conversation.objects.filter(seller=self.request.user) | Conversation.objects.filter(buyer=self.request.user)
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic.detail import DetailView
+from .models import Conversation
+from .forms import MessageForm
+
+class ConversationDetailView(LoginRequiredMixin, DetailView):
+    model = Conversation
+    template_name = 'main/conversation_detail.html'
+    context_object_name = 'conversation'
+
+    def get_object(self, queryset=None):
+        # Отримання об'єкта розмови з перевіркою доступу
+        obj = get_object_or_404(Conversation, pk=self.kwargs['pk'])
+        if self.request.user != obj.buyer and self.request.user != obj.seller:
+            raise Http404("No conversation found matching the query")
+        return obj
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = MessageForm()
+        context['umessages'] = self.object.messages.all()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = MessageForm(request.POST)
+        if form.is_valid():
+            message = form.save(commit=False)
+            message.conversation = self.object
+            message.sender = request.user
+            message.save()
+            return self.get(request, *args, **kwargs)
+        else:
+            return self.render_to_response(self.get_context_data(form=form))
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def conversation_detail(request, conversation_id):
+    conversation = get_object_or_404(Conversation, id=conversation_id)
+    
+    # Перевірка, чи є користувач учасником розмови
+    if request.user != conversation.buyer and request.user != conversation.seller:
+        return redirect('main:profile')  # або інша відповідна дія
+
+    umessages = conversation.messages.all()
+
+    context = {
+        'conversation': conversation,
+        'umessages': messages,
+        'user': request.user,
+    }
+
+    return render(request, 'main/conversation_detail.html', context)
+@login_required
+def send_message(request, pk):
+    conversation = get_object_or_404(Conversation, pk=pk)
+    if not conversation.can_access(request.user):
+        return redirect('conversation_list')
+    if request.method == 'POST':
+        form = MessageForm(request.POST)
+        if form.is_valid():
+            Message.objects.create(conversation=conversation, sender=request.user, text=form.cleaned_data['text'])
+            return redirect('conversation_detail', pk=pk)
+    return redirect('conversation_detail', pk=pk)

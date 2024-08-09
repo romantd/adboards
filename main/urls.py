@@ -14,10 +14,13 @@ from .views import detail
 from .views import profile_ad_detail
 from .views import profile_ad_add
 from .views import profile_ad_change, profile_ad_delete
-
+from .views import start_conversation, ConversationListView, ConversationDetailView, send_message
 app_name = 'main'
 urlpatterns = [
-    
+    path('start_conversation/<int:ad_id>/', start_conversation, name='start_conversation'),
+    path('conversations/<int:pk>/', ConversationDetailView.as_view(), name='conversation_detail'),
+    path('conversations/<int:pk>/send_message/', send_message, name='send_message'),
+    path('conversations/', ConversationListView.as_view(), name='conversation_list'),
     path('accounts/profile/delete/', DeleteUserView.as_view(), name='profile_delete'),
     path('accounts/register/activate/<str:sign>/', user_activate, name='register_activate'),
     path('accounts/register/done/', RegisterDoneView.as_view(), name='register_done'),
@@ -33,6 +36,6 @@ urlpatterns = [
     path('account/password/change/', BBPasswordChangeView.as_view(), name='password_change'),
     path('<int:category_pk>/<int:pk>/', detail, name='detail'),
     path('<int:pk>/', by_category, name='by_category'),
-    path('<str:page>/', other_page, name='other'),
+    path('page/<str:page>/', other_page, name='other'),
     path('', index, name='index'),
 ]
